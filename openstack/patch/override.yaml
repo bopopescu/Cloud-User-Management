@@ -1,0 +1,229 @@
+images:
+  tags:
+#   mariadb
+#    mariadb: docker.io/mariadb:10.1.31
+#    prometheus_create_mysql_user: docker.io/mariadb:10.1.23
+    mariadb: docker.io/mariadb:10.2.15
+    prometheus_create_mysql_user: docker.io/mariadb:10.2.15
+#    mariadb: docker.io/kolla/ubuntu-source-mariadb:queens
+#    prometheus_create_mysql_user: docker.io/mariadb:queens
+#    dep_check: kolla/ubuntu-source-kubernetes-entrypoint:queens
+#   quay.io/stackanetes/kubernetes-entrypoint:v0.2.1
+    prometheus_mysql_exporter_helm_tests: docker.io/kolla/ubuntu-source-heat-engine:queens
+
+#    memcached: docker.io/memcached:1.4
+    memcached: docker.io/memcached:1.5.7
+
+    etcd: gcr.io/google_containers/etcd-amd64:2.2.5
+
+    bootstrap: docker.io/kolla/ubuntu-source-heat-engine:queens
+    db_init: docker.io/kolla/ubuntu-source-heat-engine:queens
+    db_sync: docker.io/kolla/ubuntu-source-heat-api:queens
+    db_drop: docker.io/kolla/ubuntu-source-heat-engine:queens
+    ks_service: docker.io/kolla/ubuntu-source-heat-engine:queens
+    ks_endpoints: docker.io/kolla/ubuntu-source-heat-engine:queens
+    api: docker.io/kolla/ubuntu-source-heat-api:queens
+    cfn: docker.io/kolla/ubuntu-source-heat-api:queens
+    cloudwatch: docker.io/kolla/ubuntu-source-heat-api:queens
+    engine: docker.io/kolla/ubuntu-source-heat-engine:queens
+    dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.2.1
+
+# rabbitmq
+    prometheus_rabbitmq_exporter_helm_tests: docker.io/kolla/ubuntu-source-heat-engine:queens
+    rabbitmq: docker.io/rabbitmq:3.7
+    #rabbitmq: docker.io/rabbitmq:3.7.5
+# ingress
+    ingress: quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.15.0
+
+# keystone
+    keystone: docker.io/kolla/ubuntu-source-keystone:queens
+    db_drop: docker.io/kolla/ubuntu-source-heat-engine:queens
+    db_init: docker.io/kolla/ubuntu-source-heat-engine:queens
+    keystone: docker.io/kolla/ubuntu-source-keystone:queens
+    keystone_api: docker.io/kolla/ubuntu-source-keystone:queens
+    keystone_bootstrap: docker.io/kolla/ubuntu-source-keystone:queens
+    keystone_credential_rotate: docker.io/kolla/ubuntu-source-keystone:queens
+    keystone_credential_setup: docker.io/kolla/ubuntu-source-keystone:queens
+    keystone_db_sync: docker.io/kolla/ubuntu-source-keystone:queens
+    keystone_fernet_rotate: docker.io/kolla/ubuntu-source-keystone:queens
+    keystone_fernet_setup: docker.io/kolla/ubuntu-source-keystone:queens
+    ks_user: docker.io/kolla/ubuntu-source-heat-engine:queens
+    test: docker.io/kolla/ubuntu-source-rally:queens
+# liblxd
+    liblxd: docker1.eternova.com:4000/eternova/ubuntu-source-nova-libvirt:queens
+# libvirt
+    #libvirt: docker.io/kolla/ubuntu-source-nova-libvirt:queens
+    libvirt: docker1.eternova.com:4000/eternova/ubuntu-source-nova-libvirt:queens
+# openvswitch
+    openvswitch_db_server: docker.io/kolla/ubuntu-source-openvswitch-db-server:queens
+    openvswitch_vswitchd: docker.io/kolla/ubuntu-source-openvswitch-vswitchd:queens
+#horizon
+    #horizon_db_sync: docker.io/kolla/ubuntu-source-horizon:queens
+    #horizon: docker.io/kolla/ubuntu-source-horizon:queens
+    horizon_db_sync: docker1.eternova.com:4000/eternova/ubuntu-source-horizon:queens
+    horizon: docker1.eternova.com:4000/eternova/ubuntu-source-horizon:queens
+# glance
+    glance_api: docker.io/kolla/ubuntu-source-glance-api:queens
+    glance_db_sync: docker.io/kolla/ubuntu-source-glance-api:queens
+    glance_registry: docker.io/kolla/ubuntu-source-glance-registry:queens
+
+# heat
+    heat_api: docker.io/kolla/ubuntu-source-heat-api:queens
+    heat_cfn: docker.io/kolla/ubuntu-source-heat-api:queens
+    heat_cloudwatch: docker.io/kolla/ubuntu-source-heat-api:queens
+    heat_db_sync: docker.io/kolla/ubuntu-source-heat-api:queens
+    heat_engine: docker.io/kolla/ubuntu-source-heat-engine:queens
+# neutron
+    neutron_db_sync: docker.io/kolla/ubuntu-source-neutron-server:queens
+    neutron_dhcp: docker.io/kolla/ubuntu-source-neutron-dhcp-agent:queens
+    neutron_l3: docker.io/kolla/ubuntu-source-neutron-l3-agent:queens
+    neutron_linuxbridge_agent: docker.io/kolla/ubuntu-source-neutron-linuxbridge-agent:queens
+    neutron_metadata: docker.io/kolla/ubuntu-source-neutron-metadata-agent:queens
+    neutron_openvswitch_agent: docker.io/kolla/ubuntu-source-neutron-openvswitch-agent:queens
+    neutron_server: docker.io/kolla/ubuntu-source-neutron-server:queens
+# nova
+    test: docker.io/kolla/ubuntu-source-rally:queens
+    db_init: docker.io/kolla/ubuntu-source-heat-engine:queens
+    db_sync: docker.io/kolla/ubuntu-source-nova-api:queens
+    db_drop: docker.io/kolla/ubuntu-source-heat-engine:queens
+    ks_user: docker.io/kolla/ubuntu-source-heat-engine:queens
+    ks_service: docker.io/kolla/ubuntu-source-heat-engine:queens
+    ks_endpoints: docker.io/kolla/ubuntu-source-heat-engine:queens
+    api: docker.io/kolla/ubuntu-source-nova-api:queens
+    conductor: docker.io/kolla/ubuntu-source-nova-conductor:queens
+    scheduler: docker.io/kolla/ubuntu-source-nova-scheduler:queens
+    novncproxy: docker.io/kolla/ubuntu-source-nova-novncproxy:queens
+    novncproxy_assets: docker.io/kolla/ubuntu-source-nova-novncproxy:queens
+    spiceproxy: docker.io/kolla/ubuntu-source-nova-spicehtml5proxy:queens
+    spiceproxy_assets: docker.io/kolla/ubuntu-source-nova-spicehtml5proxy:queens
+    consoleauth: docker.io/kolla/ubuntu-source-nova-consoleauth:queens
+    #compute: docker.io/kolla/ubuntu-source-nova-compute:queens
+    compute: docker1.eternova.com:4000/eternova/ubuntu-source-nova-compute:queens
+    compute_ssh: docker.io/kolla/ubuntu-source-nova-ssh:queens
+    compute_ironic: docker.io/kolla/ubuntu-source-nova-compute-ironic:queens
+    placement: docker.io/kolla/ubuntu-source-nova-placement-api:queens
+    bootstrap: docker.io/kolla/ubuntu-source-heat-engine:queens
+    cell_setup: docker.io/kolla/ubuntu-source-nova-api:queens
+# zun
+    zun_api: docker1.eternova.com:4000/eternova/ubuntu-source-zun-api:queens
+    zun_compute: docker1.eternova.com:4000/eternova/ubuntu-source-zun-compute:queens
+    zun_db_sync: docker1.eternova.com:4000/eternova/ubuntu-source-zun-api:queens
+    #zun_api: docker.io/kolla/ubuntu-source-zun-api:queens
+    #zun_compute: docker.io/kolla/ubuntu-source-zun-compute:queens
+    #zun_db_sync: docker.io/kolla/ubuntu-source-zun-api:queens
+    zun_storage_init: docker.io/ceph/daemon:tag-build-master-luminous-ubuntu-16.04
+    db_init: docker.io/kolla/ubuntu-source-heat-engine:queens
+    db_drop: docker.io/kolla/ubuntu-source-heat-engine:queens
+    ks_user: docker.io/kolla/ubuntu-source-heat-engine:queens
+    ks_service: docker.io/kolla/ubuntu-source-heat-engine:queens
+    ks_endpoints: docker.io/kolla/ubuntu-source-heat-engine:queens
+    zun_registry: docker.io/kolla/ubuntu-source-zun-registry:queens
+    bootstrap: docker.io/kolla/ubuntu-source-heat-engine:queens
+
+ceph:
+  enabled: false
+
+network:
+  interface:
+    tunnel: "ens4"
+  node_port:
+    enabled: true
+  console:
+    port: 8989
+    node_port:
+      enabled: true
+      port: 30989
+    ingress:
+      public: true
+      annotations:
+        kubernetes.io/ingress.class: "nginx"
+        nginx.ingress.kubernetes.io/rewrite-target: /
+    external_policy_local: false
+
+#    tunnel: "ens4"
+#labels:
+#  agent:
+#    dhcp:
+#      node_selector_key: openstack-helm-node-class
+#      node_selector_value: primary
+#    l3:
+#      node_selector_key: openstack-helm-node-class
+#      node_selector_value: primary
+#    metadata:
+#      node_selector_key: openstack-helm-node-class
+#      node_selector_value: primary
+
+pod:
+  replicas:
+    server: 2
+  user:
+    nova:
+      uid: 0
+    neutron:
+      uid: 0
+    zun:
+      uid: 0
+    glance:
+      uid: 0
+
+
+conf:
+  zun:
+      api:
+        zun_logging_debug: True
+  qemu:
+    stdio_handler: "file"
+    user: "root"
+    group: "root"
+
+  neutron:
+    DEFAULT:
+      l3_ha: True
+      min_l3_agents_per_router: 2
+      max_l3_agents_per_router: 5
+      l3_ha_network_type: vxlan
+      dhcp_agent_notification: True
+      dhcp_agents_per_network: 2
+      notify_nova_on_port_status_changes: True
+      notify_nova_on_port_data_changes: True
+      send_events_interval: 2
+      api_workers: 1
+      rpc_workers: 1
+      interface_driver: openvswitch
+      bind_port: 9696
+      bind_host: 0.0.0.0
+      debug: True
+
+  plugins:
+    ml2_conf:
+      ml2:
+        extension_drivers: port_security
+        # mechnism_drivers can be: openvswitch, linuxbridge,
+        # opendaylight, ovn
+        mechanism_drivers: openvswitch,l2population
+        type_drivers: vxlan,flat,vlan
+        #tenant_network_types: vxlan
+        tenant_network_types: vxlan
+      ml2_type_flat:
+        flat_networks: public
+    openvswitch_agent:
+      agent:
+        tunnel_types: vxlan
+      ovs:
+        tenant_network_type: vxlan
+        tunnel_type: vxlan
+        bridge_mappings: public:br-ex
+        ovsdb_connection: unix:/run/openvswitch/db.sock
+  nova:
+    DEFAULT:
+      compute_driver: lxd.LXDDriver
+    vnc:
+      vncserver_proxyclient_address: 0.0.0.0
+    spice:
+      server_proxyclient_address: 0.0.0.0
+  horizon:
+    DEFAULT:
+      python_path: /var/lib/kolla/venv/lib/python2.7/site-packages
+    api:
+      openstack_service_workers: 2
+

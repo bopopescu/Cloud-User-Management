@@ -1,0 +1,105 @@
+{{/*
+Copyright 2017 The Openstack-Helm Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/}}
+
+{{- if .Values.manifests.daemonset_liblxd }}
+{{- $envAll := . }}
+{{- $dependencies := .Values.dependencies.liblxd }}
+
+{{- $mounts_liblxd := .Values.pod.mounts.liblxd.liblxd }}
+{{- $mounts_liblxd_init := .Values.pod.mounts.liblxd.init_container }}
+
+{{- $serviceAccountName := "liblxd" }}
+{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+---
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: liblxd
+spec:
+{{ tuple $envAll "liblxd" | include "helm-toolkit.snippets.kubernetes_upgrades_daemonset" | indent 2 }}
+  template:
+    metadata:
+      labels:
+{{ tuple $envAll "liblxd" "liblxd" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+      annotations:
+        configmap-bin-hash: {{ tuple "configmap-bin.yaml" . | include "helm-toolkit.utils.hash" }}
+    spec:
+      serviceAccountName: {{ $serviceAccountName }}
+      nodeSelector:
+        {{ .Values.labels.agent.liblxd.node_selector_key }}: {{ .Values.labels.agent.liblxd.node_selector_value }}
+      hostNetwork: true
+      hostPID: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: liblxd
+          image: {{ .Values.images.tags.liblxd }}
+          imagePullPolicy: {{ .Values.images.pull_policy }}
+{{ tuple $envAll $envAll.Values.pod.resources.liblxd | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          securityContext:
+            privileged: true
+            runAsUser: 0
+          command:
+            - /tmp/liblxd.sh
+          volumeMounts:
+            - name: liblxd-bin
+              mountPath: /tmp/liblxd.sh
+              subPath: liblxd.sh
+              readOnly: true
+            - mountPath: /lib/modules
+              name: libmodules
+              readOnly: true
+            - name: var-lib-liblxd
+              mountPath: /var/lib/lxd
+            - name: var-lib-nova
+              mountPath: /var/lib/nova
+            - name: run
+              mountPath: /run
+            - name: dev
+              mountPath: /dev
+            - name: cgroup
+              mountPath: /sys/fs/cgroup
+            - name: machine-id
+              mountPath: /etc/machine-id
+              readOnly: true
+{{ if $mounts_liblxd.volumeMounts }}{{ toYaml $mounts_liblxd.volumeMounts | indent 12 }}{{ end }}
+      volumes:
+        - name: liblxd-bin
+          configMap:
+            name: liblxd-bin
+            defaultMode: 0555
+        - name: libmodules
+          hostPath:
+            path: /lib/modules
+        - name: var-lib-liblxd
+          hostPath:
+            path: /var/lib/lxd
+        - name: var-lib-nova
+          hostPath:
+            path: /var/lib/nova
+        - name: run
+          hostPath:
+            path: /run
+        - name: dev
+          hostPath:
+            path: /dev
+        - name: cgroup
+          hostPath:
+            path: /sys/fs/cgroup
+        - name: machine-id
+          hostPath:
+            path: /etc/machine-id
+{{ if $mounts_liblxd.volumes }}{{ toYaml $mounts_liblxd.volumes | indent 8 }}{{ end }}
+{{- end }}

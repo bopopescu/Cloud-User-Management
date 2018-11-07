@@ -1,0 +1,177 @@
+{{/*
+Copyright 2017 The Openstack-Helm Authors.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+   http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+*/}}
+
+{{- if .Values.manifests.deployment_api }}
+{{- $envAll := . }}
+{{- $dependencies := .Values.dependencies.api }}
+
+{{- $mounts_zun_api := .Values.pod.mounts.zun_api.zun_api }}
+{{- $mounts_zun_api_init := .Values.pod.mounts.zun_api.init_container }}
+
+{{- $serviceAccountName := "zun-api" }}
+{{ tuple $envAll $dependencies $serviceAccountName | include "helm-toolkit.snippets.kubernetes_pod_rbac_serviceaccount" }}
+---
+apiVersion: apps/v1beta1
+kind: Deployment
+metadata:
+  name: zun-api
+spec:
+  replicas: {{ .Values.pod.replicas.api }}
+{{ tuple $envAll | include "helm-toolkit.snippets.kubernetes_upgrades_deployment" | indent 2 }}
+  template:
+    metadata:
+      labels:
+{{ tuple $envAll "zun" "api" | include "helm-toolkit.snippets.kubernetes_metadata_labels" | indent 8 }}
+      annotations:
+        configmap-bin-hash: {{ tuple "configmap-bin.yaml" . | include "helm-toolkit.utils.hash" }}
+        configmap-etc-hash: {{ tuple "configmap-etc.yaml" . | include "helm-toolkit.utils.hash" }}
+    spec:
+      serviceAccountName: {{ $serviceAccountName }}
+      affinity:
+{{ tuple $envAll "zun" "api" | include "helm-toolkit.snippets.kubernetes_pod_anti_affinity" | indent 8 }}
+      nodeSelector:
+        {{ .Values.labels.node_selector_key }}: {{ .Values.labels.node_selector_value }}
+      terminationGracePeriodSeconds: {{ .Values.pod.lifecycle.termination_grace_period.api.timeout | default "600" }}
+      initContainers:
+{{ tuple $envAll $dependencies $mounts_zun_api_init | include "helm-toolkit.snippets.kubernetes_entrypoint_init_container" | indent 8 }}
+        - name: zun-perms
+          image: {{ .Values.images.tags.zun_api }}
+          imagePullPolicy: {{ .Values.images.pull_policy }}
+          securityContext:
+            runAsUser: 0
+{{ tuple $envAll $envAll.Values.pod.resources.api | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          command:
+            - chown
+            - -R
+            - "zun:"
+            - {{ .Values.conf.zun.zun_store.filesystem_store_datadir }}
+          volumeMounts:
+            - name: zun-images
+              mountPath: {{ .Values.conf.zun.zun_store.filesystem_store_datadir }}
+        {{ if eq .Values.storage "rbd" }}
+        - name: ceph-keyring-placement
+          image: {{ .Values.images.tags.zun_api }}
+          imagePullPolicy: {{ .Values.images.pull_policy }}
+          securityContext:
+            runAsUser: {{ .Values.pod.user.zun.uid }}
+          env:
+            - name: RBD_STORE_USER
+              value: {{ .Values.conf.zun.zun_store.rbd_store_user | quote }}
+          command:
+            - /tmp/ceph-keyring.sh
+          volumeMounts:
+            - name: etcceph
+              mountPath: /etc/ceph
+            - name: zun-bin
+              mountPath: /tmp/ceph-keyring.sh
+              subPath: ceph-keyring.sh
+              readOnly: true
+            - name: ceph-keyring
+              mountPath: /tmp/client-keyring
+              subPath: key
+              readOnly: true
+        {{ end }}
+      containers:
+        - name: zun-api
+          image: {{ .Values.images.tags.zun_api }}
+          imagePullPolicy: {{ .Values.images.pull_policy }}
+{{ tuple $envAll $envAll.Values.pod.resources.api | include "helm-toolkit.snippets.kubernetes_resources" | indent 10 }}
+          securityContext:
+            runAsUser: {{ .Values.pod.user.zun.uid }}
+          command:
+            - /tmp/zun-api.sh
+            - start
+          lifecycle:
+            preStop:
+              exec:
+                command:
+                  - /tmp/zun-api.sh
+                  - stop
+          ports:
+            - containerPort: {{ .Values.conf.zun.DEFAULT.bind_port }}
+          readinessProbe:
+            tcpSocket:
+              port: {{ .Values.conf.zun.DEFAULT.bind_port }}
+          volumeMounts:
+            - name: etczun
+              mountPath: /etc/zun
+            - name: zun-bin
+              mountPath: /tmp/zun-api.sh
+              subPath: zun-api.sh
+              readOnly: true
+            - name: zun-etc
+              mountPath: /etc/zun/zun.conf
+              subPath: zun.conf
+              readOnly: true
+            - name: zun-etc
+              mountPath: /etc/zun/api-paste.ini
+              subPath: api-paste.ini
+              readOnly: true
+            - name: zun-etc
+              mountPath: /etc/zun/policy.json
+              subPath: policy.json
+              readOnly: true
+            - name: zun-etc
+              mountPath: {{ .Values.conf.zun.zun_store.swift_store_config_file }}
+              subPath: swift-store.conf
+              readOnly: true
+            - name: zun-images
+              mountPath: {{ .Values.conf.zun.zun_store.filesystem_store_datadir }}
+{{- if eq .Values.storage "rbd" }}
+            - name: etcceph
+              mountPath: /etc/ceph
+            - name: ceph-etc
+              mountPath: /etc/ceph/ceph.conf
+              subPath: ceph.conf
+              readOnly: true
+            - name: ceph-keyring
+              mountPath: /tmp/client-keyring
+              subPath: key
+              readOnly: true
+{{- end }}
+{{ if $mounts_zun_api.volumeMounts }}{{ toYaml $mounts_zun_api.volumeMounts | indent 12 }}{{ end }}
+      volumes:
+        - name: etczun
+          emptyDir: {}
+        - name: zun-bin
+          configMap:
+            name: zun-bin
+            defaultMode: 0555
+        - name: zun-etc
+          configMap:
+            name: zun-etc
+            defaultMode: 0444
+{{- if eq .Values.storage "pvc" }}
+        - name: zun-images
+          persistentVolumeClaim:
+            claimName: zun-images
+{{ else }}
+        - name: zun-images
+          emptyDir: {}
+{{- end }}
+{{- if eq .Values.storage "rbd" }}
+        - name: etcceph
+          emptyDir: {}
+        - name: ceph-etc
+          configMap:
+            name: ceph-etc
+            defaultMode: 0444
+        - name: ceph-keyring
+          secret:
+            secretName: {{ .Values.secrets.rbd | quote }}
+{{- end }}
+{{ if $mounts_zun_api.volumes }}{{ toYaml $mounts_zun_api.volumes | indent 8 }}{{ end }}
+{{- end }}

@@ -1,0 +1,664 @@
+# Copyright 2017 The Openstack-Helm Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Default values for zun.
+# This is a YAML-formatted file.
+# Declare name/value pairs to be passed into your templates.
+# name: value
+
+# radosgw, rbd, swift or pvc
+storage: radosgw
+
+labels:
+  node_selector_key: openstack-control-plane
+  node_selector_value: enabled
+  job:
+    node_selector_key: openstack-control-plane
+    node_selector_value: enabled
+  agent:
+    zun_compute:
+      node_selector_key: openstack-compute-node
+      node_selector_value: enabled
+
+release_group: null
+
+ceph:
+  enabled: true
+  monitors: []
+  cinder_user: "admin"
+  cinder_keyring: null
+  secret_uuid: 457eb676-33da-42ec-9a8c-9293d545c337
+
+images:
+  tags:
+    test: docker.io/kolla/ubuntu-source-rally:4.0.0
+    zun_storage_init: docker.io/ceph/daemon:tag-build-master-luminous-ubuntu-16.04
+    db_init: docker.io/kolla/ubuntu-source-heat-engine:3.0.3
+    zun_db_sync: docker.io/kolla/ubuntu-source-zun-api:3.0.3
+    db_drop: docker.io/kolla/ubuntu-source-heat-engine:3.0.3
+    ks_user: docker.io/kolla/ubuntu-source-heat-engine:3.0.3
+    ks_service: docker.io/kolla/ubuntu-source-heat-engine:3.0.3
+    ks_endpoints: docker.io/kolla/ubuntu-source-heat-engine:3.0.3
+    zun_api: docker.io/kolla/ubuntu-source-zun-api:3.0.3
+    zun_compute: docker.io/kolla/ubuntu-source-zun-compute:3.0.3
+    zun_registry: docker.io/kolla/ubuntu-source-zun-registry:3.0.3
+    # Bootstrap image requires curl
+    bootstrap: docker.io/kolla/ubuntu-source-heat-engine:3.0.3
+    dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.2.1
+  pull_policy: "IfNotPresent"
+
+bootstrap:
+  enabled: true
+  images:
+    cirros:
+      id: null
+      name: "Cirros 0.3.5 64-bit"
+      source_url: "http://download.cirros-cloud.net/0.3.5/"
+      image_file: "cirros-0.3.5-x86_64-disk.img"
+      min_disk: 1
+      image_type: qcow2
+      container_format: bare
+      private: true
+      properties:
+        hypervisor_type: "qemu"
+        os_distro: "cirros"
+
+conf:
+  rally_tests:
+    run_tempest: false
+    tests:
+      ZunImages.create_and_delete_image:
+        - args:
+            container_format: bare
+            disk_format: qcow2
+            image_location: http://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img
+          runner:
+            concurrency: 1
+            times: 1
+            type: constant
+          sla:
+            failure_rate:
+              max: 0
+      ZunImages.create_and_list_image:
+        - args:
+            container_format: bare
+            disk_format: qcow2
+            image_location: http://download.cirros-cloud.net/0.3.5/cirros-0.3.5-x86_64-disk.img
+          runner:
+            concurrency: 1
+            times: 1
+            type: constant
+          sla:
+            failure_rate:
+              max: 0
+  ceph:
+    monitors: []
+    admin_keyring: null
+    override:
+    append:
+  ceph_client:
+    override:
+    append:
+  paste:
+
+    pipeline:main:
+      pipeline: cors request_id osprofiler authtoken api_v1
+    app:api_v1:
+      paste.app_factory: zun.api.app:app_factory
+    filter:authtoken:
+      acl_public_routes: /, /v1
+      paste.filter_factory: zun.api.middleware.auth_token:AuthTokenMiddleware.factory
+    filter:osprofiler:
+      paste.filter_factory: zun.common.profiler:WsgiMiddleware.factory
+    filter:request_id:
+      paste.filter_factory: oslo_middleware:RequestId.factory
+    filter:cors:
+      paste.filter_factory:  oslo_middleware.cors:filter_factory
+      oslo_config_project: zun
+
+  policy:
+    context_is_admin: role:admin
+    default: role:admin
+    add_image: ''
+    delete_image: ''
+    get_image: ''
+    get_images: ''
+    modify_image: ''
+    publicize_image: role:admin
+    copy_from: ''
+    download_image: ''
+    upload_image: ''
+    delete_image_location: ''
+    get_image_location: ''
+    set_image_location: ''
+    add_member: ''
+    delete_member: ''
+    get_member: ''
+    get_members: ''
+    modify_member: ''
+    manage_image_cache: role:admin
+    get_task: role:admin
+    get_tasks: role:admin
+    add_task: role:admin
+    modify_task: role:admin
+    deactivate: ''
+    reactivate: ''
+    get_metadef_namespace: ''
+    get_metadef_namespaces: ''
+    modify_metadef_namespace: ''
+    add_metadef_namespace: ''
+    get_metadef_object: ''
+    get_metadef_objects: ''
+    modify_metadef_object: ''
+    add_metadef_object: ''
+    list_metadef_resource_types: ''
+    get_metadef_resource_type: ''
+    add_metadef_resource_type_association: ''
+    get_metadef_property: ''
+    get_metadef_properties: ''
+    modify_metadef_property: ''
+    add_metadef_property: ''
+    get_metadef_tag: ''
+    get_metadef_tags: ''
+    modify_metadef_tag: ''
+    add_metadef_tag: ''
+    add_metadef_tags: ''
+  zun:
+    DEFAULT:
+      bind_port: 9517
+    api:
+      openstack_service_workers: 2
+      zun_logging_debug: False
+    keystone_auth:
+      internal_protocol: http
+      kolla_internal_fqdn: 172.30.4.254
+      keystone_public_port: 5000
+      admin_protocol: http
+      keystone_admin_port: 35357
+      default_project_domain_id: default
+      default_user_domain_id: default
+      zun_keystone_user: zun
+      zun_keystone_password: password
+      memcache_secret_key: password
+      memcached_port: 11211
+    keystone_authtoken:
+      internal_protocol: http
+      kolla_internal_fqdn: 172.30.4.254
+      keystone_public_port: 5000
+      admin_protocol: http
+      keystone_admin_port: 35357
+      default_project_domain_id: default
+      default_user_domain_id: default
+      zun_keystone_user: zun
+      zun_keystone_password: password
+      memcache_secret_key: password
+      memcached_port: 11211
+
+      auth_type: password
+      auth_version: v3
+      memcache_security_strategy: ENCRYPT
+
+    glance_client:
+      internal_protocol: http
+      kolla_internal_fqdn: 172.30.4.254
+      keystone_public_port: 5000
+      admin_protocol: http
+      keystone_admin_port: 35357
+      default_project_domain_id: default
+      default_user_domain_id: default
+      zun_keystone_user: zun
+      zun_keystone_password: password
+      openstack_region_name: RegionOne
+    neutron_client:
+      internal_protocol: http
+      kolla_internal_fqdn: 172.30.4.254
+      keystone_public_port: 5000
+      admin_protocol: http
+      keystone_admin_port: 35357
+      default_project_domain_id: default
+      default_user_domain_id: default
+      zun_keystone_user: zun
+      zun_keystone_password: password
+      openstack_region_name: RegionOne
+    profiler:
+      osprofiler_secret:
+      elasticsearch_address:
+      elasticsearch_port:
+
+    zun_store:
+      rbd_store_chunk_size: 8
+      rbd_store_pool: zun.images
+      rbd_store_user: zun
+      rbd_store_ceph_conf: /etc/ceph/ceph.conf
+      filesystem_store_datadir: /var/lib/zun/images
+      default_swift_reference: ref1
+      swift_store_container: zun
+      swift_store_create_container_on_put: true
+      swift_store_config_file: /etc/zun/swift-store.conf
+    paste_deploy:
+      flavor: keystone
+    database:
+      max_retries: -1
+    oslo_messaging_notifications:
+      driver: messagingv2
+  paste_registry:
+    pipeline:zun-registry:
+      pipeline: healthcheck osprofiler unauthenticated-context registryapp
+    pipeline:zun-registry-keystone:
+      pipeline: healthcheck osprofiler authtoken context registryapp
+    pipeline:zun-registry-trusted-auth:
+      pipeline: healthcheck osprofiler context registryapp
+    app:registryapp:
+      paste.app_factory: zun.registry.api:API.factory
+    filter:healthcheck:
+      paste.filter_factory: oslo_middleware:Healthcheck.factory
+      backends: disable_by_file
+      disable_by_file_path: /etc/zun/healthcheck_disable
+    filter:context:
+      paste.filter_factory: zun.api.middleware.context:ContextMiddleware.factory
+    filter:unauthenticated-context:
+      paste.filter_factory: zun.api.middleware.context:UnauthenticatedContextMiddleware.factory
+    filter:authtoken:
+      paste.filter_factory: keystonemiddleware.auth_token:filter_factory
+    filter:osprofiler:
+      paste.filter_factory: osprofiler.web:WsgiMiddleware.factory
+      hmac_keys: SECRET_KEY  #DEPRECATED
+      enabled: yes  #DEPRECATED
+  swift_store:
+    override:
+    append:
+
+network:
+  api:
+    ingress:
+      public: true
+      annotations:
+        kubernetes.io/ingress.class: "nginx"
+        nginx.ingress.kubernetes.io/rewrite-target: /
+        nginx.ingress.kubernetes.io/proxy-body-size: "1024M"
+    external_policy_local: false
+    node_port:
+      enabled: false
+      port: 30092
+  registry:
+    ingress:
+      public: true
+      annotations:
+        kubernetes.io/ingress.class: "nginx"
+        nginx.ingress.kubernetes.io/rewrite-target: /
+    external_policy_local: false
+    node_port:
+      enabled: false
+      port: 30091
+
+volume:
+  class_name: general
+  size: 2Gi
+
+dependencies:
+  clean:
+    jobs: null
+  storage_init:
+    services:
+  db_init:
+    services:
+    - service: oslo_db
+      endpoint: internal
+  db_sync:
+    jobs:
+    - zun-db-init
+    services:
+    - service: oslo_db
+      endpoint: internal
+  db_drop:
+    services:
+    - service: oslo_db
+      endpoint: internal
+  bootstrap:
+    jobs:
+    - zun-storage-init
+    - zun-db-sync
+    - zun-ks-user
+    - zun-ks-endpoints
+    services:
+    - service: identity
+      endpoint: internal
+    - service: image
+      endpoint: internal
+  ks_user:
+    services:
+    - service: identity
+      endpoint: internal
+  ks_service:
+    services:
+    - service: identity
+      endpoint: internal
+  ks_endpoints:
+    jobs:
+    - zun-ks-service
+    services:
+    - service: identity
+      endpoint: internal
+  api:
+    jobs:
+    - zun-storage-init
+    - zun-db-sync
+    - zun-ks-user
+    - zun-ks-endpoints
+    services:
+    - service: oslo_db
+      endpoint: internal
+    - service: identity
+      endpoint: internal
+  compute:
+    jobs:
+    - zun-storage-init
+    - zun-db-sync
+    - zun-ks-user
+    - zun-ks-endpoints
+    services:
+    - service: oslo_db
+      endpoint: internal
+    - service: identity
+      endpoint: internal
+  tests:
+    services:
+    - service: oslo_db
+      endpoint: internal
+    - service: identity
+      endpoint: internal
+    - service: container
+      endpoint: internal
+
+# Names of secrets used by bootstrap and environmental checks
+secrets:
+  identity:
+    admin: zun-keystone-admin
+    zun: zun-keystone-user
+    test: zun-keystone-test
+  oslo_db:
+    admin: zun-db-admin
+    zun: zun-db-user
+  rbd: images-rbd-keyring
+
+# typically overriden by environmental
+# values, but should include all endpoints
+# required by this chart
+endpoints:
+  cluster_domain_suffix: cluster.local
+  identity:
+    name: keystone
+    auth:
+      admin:
+        region_name: RegionOne
+        username: admin
+        password: password
+        project_name: admin
+        user_domain_name: default
+        project_domain_name: default
+      zun:
+        role: admin
+        region_name: RegionOne
+        username: zun
+        password: password
+        project_name: service
+        user_domain_name: default
+        project_domain_name: default
+      test:
+        role: admin
+        region_name: RegionOne
+        username: test
+        password: password
+        project_name: test
+        user_domain_name: default
+        project_domain_name: default
+    hosts:
+      default: keystone-api
+      public: keystone
+    host_fqdn_override:
+      default: null
+    path:
+      default: /v3
+    scheme:
+      default: http
+    port:
+      admin:
+        default: 35357
+      api:
+        default: 80
+  container:
+    name: zun
+    hosts:
+      default: zun-api
+      public: zun
+    host_fqdn_override:
+      default: null
+    path:
+      default: null
+    scheme:
+      default: http
+    port:
+      api:
+        default: 9517
+        public: 80
+  oslo_db:
+    auth:
+      admin:
+        username: root
+        password: password
+      zun:
+        username: zun
+        password: password
+    hosts:
+      default: mariadb
+    host_fqdn_override:
+      default: null
+    path: /zun
+    scheme: mysql+pymysql
+    port:
+      mysql:
+        default: 3306
+  oslo_cache:
+    hosts:
+      default: memcached
+    host_fqdn_override:
+      default: null
+    port:
+      memcache:
+        default: 11211
+  oslo_messaging:
+    auth:
+      zun:
+        username: rabbitmq
+        password: password
+    hosts:
+      default: rabbitmq
+    host_fqdn_override:
+      default: null
+    path: /
+    scheme: rabbit
+    port:
+      amqp:
+        default: 5672
+  ceph_object_store:
+    name: radosgw
+    namespace: ceph
+    auth:
+      zun:
+        username: zun
+        password: password
+        tmpurlkey: supersecret
+    hosts:
+      default: ceph-rgw
+    host_fqdn_override:
+      default: null
+    path:
+      default: /auth/v1.0
+    scheme:
+      default: http
+    port:
+      api:
+        default: 8088
+
+pod:
+  user:
+    zun:
+      uid: 1000
+  affinity:
+      anti:
+        type:
+          default: preferredDuringSchedulingIgnoredDuringExecution
+        topologyKey:
+          default: kubernetes.io/hostname
+  mounts:
+    zun_api:
+      init_container: null
+      zun_api:
+    zun_compute:
+      init_container: null
+      zun_compute:
+    zun_tests:
+      init_container: null
+      zun_tests:
+  replicas:
+    api: 1
+    registry: 1
+  lifecycle:
+    upgrades:
+      deployments:
+        revision_history: 3
+        pod_replacement_strategy: RollingUpdate
+        rolling_update:
+          max_unavailable: 1
+          max_surge: 3
+      daemonsets:
+        pod_replacement_strategy: RollingUpdate
+        zun_compute:
+          enabled: true
+          min_ready_seconds: 0
+          max_unavailable: 1
+    disruption_budget:
+      api:
+        min_available: 0
+      registry:
+        min_available: 0
+    termination_grace_period:
+      api:
+        timeout: 600
+      registry:
+        timeout: 600
+  resources:
+    enabled: false
+    api:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    compute:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+    jobs:
+      storage_init:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      db_sync:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      db_init:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      db_drop:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      ks_user:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      ks_service:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      ks_endpoints:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      bootstrap:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+      tests:
+        requests:
+          memory: "128Mi"
+          cpu: "100m"
+        limits:
+          memory: "1024Mi"
+          cpu: "2000m"
+
+manifests:
+  configmap_bin: true
+  configmap_etc: true
+  deployment_api: true
+  ingress_api: true
+  job_bootstrap: false
+  job_clean: true
+  job_db_init: true
+  job_db_sync: true
+  job_db_drop: false
+  job_ks_endpoints: true
+  job_ks_service: true
+  job_ks_user: true
+  job_storage_init: true
+  pdb_api: true
+  pdb_registry: true
+  pod_rally_test: true
+  pvc_images: true
+  secret_db: true
+  secret_keystone: true
+  service_ingress_api: true
+  service_api: true
+  daemonset_zun_compute: true

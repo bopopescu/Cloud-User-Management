@@ -1,0 +1,26 @@
+<div ng-controller="horizon.dashboard.container.containers.OverviewController as ctrl">
+  <div class="row">
+    <div class="col-md-6 detail">
+      <h3 translate>Info</h3>
+      <hr>
+      <hz-resource-property-list
+        resource-type-name="OS::Zun::Paymentmethod"
+        cls="dl-horizontal"
+        item="ctrl.container"
+        property-groups="[['displayname']]">
+      </hz-resource-property-list>
+    </div>
+    <div class="col-md-6 detail">
+      <h3 translate>Spec</h3>
+      <hr>
+      <hz-resource-property-list
+        resource-type-name="OS::Zun::Paymentmethod"
+        cls="dl-horizontal"
+        item="ctrl.container"
+        property-groups="[['payment_method_type', 'cc_first_name', 'cc_middle_name', 'cc_last_name', 'cc_card_no', 'cc_cvv',
+        'cc_billing_address_line1', 'cc_billing_address_line2', 'cc_billing_address_line3', 'cc_billing_address_apt_suite_no',
+        'cc_city', 'cc_state', 'cc_zipcode', 'cc_country', 'cc_expiration_date', 'pp_email']]">
+      </hz-resource-property-list>
+    </div>
+  </div>
+</div>

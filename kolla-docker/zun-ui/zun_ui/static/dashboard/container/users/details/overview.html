@@ -1,0 +1,26 @@
+<div ng-controller="horizon.dashboard.container.containers.OverviewController as ctrl">
+  <div class="row">
+    <div class="col-md-6 detail">
+      <h3 translate>Info</h3>
+      <hr>
+      <hz-resource-property-list
+        resource-type-name="OS::Zun::User"
+        cls="dl-horizontal"
+        item="ctrl.container"
+        property-groups="[['displayname']]">
+      </hz-resource-property-list>
+    </div>
+    <div class="col-md-6 detail">
+      <h3 translate>Spec</h3>
+      <hr>
+      <hz-resource-property-list
+        resource-type-name="OS::Zun::User"
+        cls="dl-horizontal"
+        item="ctrl.container"
+        property-groups="[['user_name', 'last_name', 'first_name', 'middle_name', 'password', 'account_status', 'failed_attempt',
+        'last_login_method', 'current_user_charge_tier', 'admin_ind', 'passreset_url', 'activation_url', 'activation_expir_date',
+        'passreset_expir_date', 'last_login_time', 'last_success_login_ip', 'last_failed_login_ip']]">
+      </hz-resource-property-list>
+    </div>
+  </div>
+</div>

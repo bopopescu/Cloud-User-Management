@@ -1,0 +1,154 @@
+# Copyright 2017 The Openstack-Helm Authors.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+# Default values for liblxd.
+# This is a YAML-formatted file.
+# Declare name/value pairs to be passed into your templates.
+# name: value
+
+release_group: null
+
+labels:
+  agent:
+    liblxd:
+      node_selector_key: openstack-compute-node
+      node_selector_value: enabled
+
+images:
+  tags:
+    liblxd: docker.io/kolla/ubuntu-source-nova-compute:3.0.3
+    dep_check: quay.io/stackanetes/kubernetes-entrypoint:v0.2.1
+  pull_policy: "IfNotPresent"
+
+conf:
+  liblxd:
+    lxd_bind_address: 0.0.0.0
+    lxd_bind_port: 8443
+    lxd_storage_backend: "zfs"
+    lxd_trust_password: "password"
+    lxd_storage_pool: "zfs"
+  qemu:
+    stdio_handler: "file"
+    user: "nova"
+    group: "kvm"
+
+pod:
+  affinity:
+      anti:
+        type:
+          default: preferredDuringSchedulingIgnoredDuringExecution
+        topologyKey:
+          default: kubernetes.io/hostname
+  mounts:
+    liblxd:
+      init_container: null
+      liblxd:
+  lifecycle:
+    upgrades:
+      daemonsets:
+        pod_replacement_strategy: RollingUpdate
+        liblxd:
+          enabled: true
+          min_ready_seconds: 0
+          max_unavailable: 1
+  resources:
+    enabled: false
+    liblxd:
+      requests:
+        memory: "128Mi"
+        cpu: "100m"
+      limits:
+        memory: "1024Mi"
+        cpu: "2000m"
+
+endpoints:
+  cluster_domain_suffix: cluster.local
+  identity:
+    name: keystone
+    hosts:
+      default: keystone-api
+      public: keystone
+    host_fqdn_override:
+      default: null
+    path:
+      default: /v3
+    scheme:
+      default: http
+    port:
+      admin:
+        default: 35357
+      api:
+        default: 80
+  oslo_cache:
+    hosts:
+      default: memcached
+    host_fqdn_override:
+      default: null
+    port:
+      memcache:
+        default: 11211
+  console:
+    name: console
+    hosts:
+      default: console-api
+      public: console
+    host_fqdn_override:
+      default: null
+    path:
+      default: null
+    scheme:
+      default: http
+    port:
+      web:
+        default: 8989
+        public: 8989
+  oslo_db:
+    auth:
+      admin:
+        username: root
+        password: password
+      horizon:
+        username: horizon
+        password: password
+    hosts:
+      default: mariadb
+    host_fqdn_override:
+      default: null
+    path: /horizon
+    scheme: mysql+pymysql
+    port:
+      mysql:
+        default: 3306
+network:
+  console:
+    port: 8989
+    node_port:
+      enabled: true
+      port: 30989
+    ingress:
+      public: true
+      annotations:
+        kubernetes.io/ingress.class: "nginx"
+        nginx.ingress.kubernetes.io/rewrite-target: /
+    external_policy_local: false
+
+dependencies:
+  liblxd: null
+
+manifests:
+  configmap_bin: true
+  daemonset_liblxd: true
+  service_console: false
+  service_ingress: false
+  ingress_api: false

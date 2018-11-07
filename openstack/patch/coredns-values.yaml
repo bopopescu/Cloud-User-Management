@@ -1,0 +1,16 @@
+#Values.yaml docs/tasks/federation  
+isClusterService: false
+#serviceType: "LoadBalancer"
+#serviceType: "NodePort"
+serviceType: "ClusterIP"
+#serviceProtocol: "tcp"
+#plugins:
+middleware:
+  kubernetes:
+    enabled: false
+  etcd:
+    enabled: true
+    zones:
+    - "roamercloud.com."
+    endpoint: "http://etcd-cluster.default:2379"
+

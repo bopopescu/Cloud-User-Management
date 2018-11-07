@@ -1,0 +1,24 @@
+<div ng-controller="horizon.dashboard.container.containers.OverviewController as ctrl">
+  <div class="row">
+    <div class="col-md-6 detail">
+      <h3 translate>Info</h3>
+      <hr>
+      <hz-resource-property-list
+        resource-type-name="OS::Zun::Providerregion"
+        cls="dl-horizontal"
+        item="ctrl.container"
+        property-groups="[['displayname']]">
+      </hz-resource-property-list>
+    </div>
+    <div class="col-md-6 detail">
+      <h3 translate>Spec</h3>
+      <hr>
+      <hz-resource-property-list
+        resource-type-name="OS::Zun::Providerregion"
+        cls="dl-horizontal"
+        item="ctrl.container"
+        property-groups="[['region']]">
+      </hz-resource-property-list>
+    </div>
+  </div>
+</div>
